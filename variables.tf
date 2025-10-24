@@ -35,9 +35,31 @@ variable "cluster_name" {
 }
 
 variable "kubernetes_version" {
-  description = "The version of kubernetes to use"
+  description = "The version of kubernetes to use. As of Oct 2025, should be at least v1.30.x"
   type        = string
-  default     = "v1.26.2"  # Update this to the latest available version
+  # We'll set this dynamically based on available versions
+  validation {
+    condition     = can(regex("^v1\\.(3[0-9]|[4-9][0-9])", var.kubernetes_version))
+    error_message = "Kubernetes version must be v1.30.0 or higher as of Oct 2025"
+  }
+}
+
+# IAM Variables
+variable "iam_group_name" {
+  description = "Name for the IAM group that will manage K8s resources"
+  type        = string
+  default     = "k8s-admins"
+}
+
+variable "compartment_name" {
+  description = "Name (not OCID) of the compartment where resources will be created"
+  type        = string
+}
+
+variable "user_ocid" {
+  description = "OCID of the user to add to the k8s group (optional)"
+  type        = string
+  default     = ""
 }
 
 variable "node_pool_name" {

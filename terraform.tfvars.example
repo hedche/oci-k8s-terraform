@@ -10,3 +10,6 @@ compartment_ocid = "ocid1.compartment.oc1..xxx"
 
 # SSH Key
 ssh_public_key = "ssh-rsa AAAA..."  # Your SSH public key content
+
+# Kubernetes Version (as of Oct 2025, use v1.30.x or higher)
+kubernetes_version = "v1.30.0"  # Update this to the latest available version from available_kubernetes_versions output

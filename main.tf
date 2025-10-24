@@ -119,15 +119,20 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
 
   node_config_details {
     size = 2
-    placement_configs {
-      availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
-      subnet_id          = oci_core_subnet.k8s_subnet.id
+    dynamic "placement_configs" {
+      for_each = data.oci_identity_availability_domains.ads.availability_domains
+      content {
+        availability_domain = placement_configs.value.name
+        subnet_id          = oci_core_subnet.k8s_subnet.id
+      }
     }
   }
 
   node_source_details {
-    image_id    = data.oci_core_images.node_pool_images.images[0].id
+    # Use Oracle Linux 8.10 ARM image
     source_type = "IMAGE"
+    image_id    = coalesce(try(data.oci_core_images.node_pool_images.images[0].id, null), 
+                          "ocid1.image.oc1.uk-london-1.aaaaaaaaavhcvlf3o2ven2l6cia3i4ton4gurepucrfhrcwj2qfekrr3pqha") # Fallback to known Oracle Linux 8.10 ARM image
   }
 
   ssh_public_key = var.ssh_public_key
@@ -135,14 +140,46 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
 
 # Data sources
 data "oci_identity_availability_domains" "ads" {
-  compartment_id = var.compartment_ocid
+  compartment_id = var.tenancy_ocid # Changed to tenancy_ocid as ADs are at tenancy level
 }
 
+# Get available k8s versions
+data "oci_containerengine_cluster_option" "cluster_options" {
+    cluster_option_id = "all"
+    compartment_id    = var.compartment_ocid
+}
+
+# Get OKE node pool options
+data "oci_containerengine_node_pool_option" "node_pool_options" {
+    node_pool_option_id = "all"
+    compartment_id      = var.compartment_ocid
+}
+
+# Get Oracle Linux image for node pool
 data "oci_core_images" "node_pool_images" {
-  compartment_id           = var.compartment_ocid
-  operating_system         = "Oracle Linux"
-  operating_system_version = "8"
-  shape                    = "VM.Standard.A1.Flex"
-  sort_by                 = "TIMECREATED"
-  sort_order              = "DESC"
+    compartment_id = var.tenancy_ocid
+    operating_system = "Oracle Linux"
+    operating_system_version = "8"
+    shape = "VM.Standard.A1.Flex"
+    sort_by = "TIMECREATED"
+    sort_order = "DESC"
+
+    # Look for the latest Oracle Linux 8.10 ARM image
+    filter {
+        name = "display_name"
+        values = ["Oracle-Linux-8.10-aarch64-2025.09.16-0"]
+        regex = false
+    }
+}
+
+# Output debugging information
+output "debug_info" {
+  value = {
+    node_pool_options = data.oci_containerengine_node_pool_option.node_pool_options
+    selected_image    = data.oci_core_images.node_pool_images.images[*]
+  }
+}
+
+output "available_kubernetes_versions" {
+    value = data.oci_containerengine_cluster_option.cluster_options.kubernetes_versions
 }

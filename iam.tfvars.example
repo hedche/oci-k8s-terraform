@@ -1,0 +1,4 @@
+# IAM Configuration
+iam_group_name   = "k8s-admins"              # Name for the IAM group that will manage K8s resources
+compartment_name = "my-k8s-compartment"      # Name (not OCID) of the compartment where resources will be created
+user_ocid        = "ocid1.user.oc1..xxxxx"   # OCID of the user to add to the k8s group (optional)

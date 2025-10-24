@@ -8,6 +8,68 @@ This repository contains Terraform configurations to create a Kubernetes cluster
 2. [Terraform](https://www.terraform.io/downloads.html) (v1.0.0+)
 3. [OCI CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)
 
+## Administrator Setup (Required First)
+
+Before creating the Kubernetes cluster, an administrator must set up the required IAM resources. This can be done either manually through the OCI Console or using Terraform. Choose one of the following approaches:
+
+### Option 1: Manual Setup via OCI Console
+
+1. Create a new IAM group:
+   - Navigate to Identity & Security → Groups
+   - Click "Create Group"
+   - Name: `k8s-admins` (or your preferred name)
+   - Description: "Group for managing OKE cluster resources"
+
+2. Add users to the group:
+   - Click on the newly created group
+   - Click "Add User to Group"
+   - Select the users who will manage the K8s cluster
+
+3. Create the required policies:
+   - Navigate to Identity & Security → Policies
+   - Click "Create Policy"
+   - Name: "kubernetes-cluster-policy"
+   - Description: "Policy for managing OKE cluster resources"
+   - Add the following statements:
+     ```
+     allow group k8s-admins to manage virtual-network-family in compartment <compartment-name>
+     allow group k8s-admins to manage cluster-family in compartment <compartment-name>
+     allow group k8s-admins to manage compute-family in compartment <compartment-name>
+     allow group k8s-admins to manage load-balancers in compartment <compartment-name>
+     ```
+   Replace `<compartment-name>` with your compartment name
+   
+   Note: For root compartment, use `in tenancy` instead of `in compartment <compartment-name>`
+
+### Option 2: Terraform Setup (Recommended)
+
+1. Copy the example IAM configuration:
+   ```bash
+   cp iam.tfvars.example iam.tfvars
+   ```
+
+2. Edit `iam.tfvars` with your settings:
+   ```hcl
+   iam_group_name   = "k8s-admins"              # Your preferred group name
+   compartment_name = "my-k8s-compartment"      # Your compartment name
+   user_ocid        = "ocid1.user.oc1..xxxxx"   # OCID of user to add to group (optional)
+   ```
+
+3. Initialize and apply the IAM configuration:
+   ```bash
+   terraform init
+   terraform plan -var-file="iam.tfvars" -target=module.iam
+   terraform apply -var-file="iam.tfvars" -target=module.iam
+   ```
+
+4. Wait for policy propagation (approximately 5-10 minutes)
+
+Important Notes:
+- The administrator running these steps must have permissions to manage groups and policies
+- IAM changes can take up to 10 minutes to propagate
+- Always follow the principle of least privilege when granting permissions
+- Review all policy statements carefully before applying them
+
 ## OCI Configuration
 
 1. Generate an API signing key:
