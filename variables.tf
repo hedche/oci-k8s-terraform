@@ -56,12 +56,6 @@ variable "compartment_name" {
   type        = string
 }
 
-variable "user_ocid" {
-  description = "OCID of the user to add to the k8s group (optional)"
-  type        = string
-  default     = ""
-}
-
 variable "node_pool_name" {
   description = "The name of the node pool"
   type        = string

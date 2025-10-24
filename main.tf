@@ -1,9 +1,22 @@
+# IAM Module for setting up required permissions
+module "iam" {
+  source = "./modules/iam"
+
+  tenancy_ocid     = var.tenancy_ocid
+  user_ocid        = var.user_ocid
+  iam_group_name   = var.iam_group_name
+  compartment_name = var.compartment_name
+}
+
 # VCN
 resource "oci_core_vcn" "k8s_vcn" {
   cidr_block     = "10.0.0.0/16"
   compartment_id = var.compartment_ocid
   display_name   = "k8s-vcn"
   dns_label      = "k8svcn"
+
+  # Add dependency on IAM module to ensure permissions exist
+  depends_on = [module.iam]
 }
 
 # Internet Gateway
@@ -177,6 +190,20 @@ output "debug_info" {
   value = {
     node_pool_options = data.oci_containerengine_node_pool_option.node_pool_options
     selected_image    = data.oci_core_images.node_pool_images.images[*]
+  }
+}
+
+# Output IAM information
+output "iam_info" {
+  value = {
+    group_name = oci_identity_group.k8s_group.name
+    group_id   = oci_identity_group.k8s_group.id
+    policies   = {
+      network = oci_identity_policy.k8s_network_policy.name
+      cluster = oci_identity_policy.k8s_cluster_policy.name
+      compute = oci_identity_policy.k8s_compute_policy.name
+      lb      = oci_identity_policy.k8s_lb_policy.name
+    }
   }
 }
 

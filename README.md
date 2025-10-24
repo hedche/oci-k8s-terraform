@@ -8,6 +8,9 @@ This repository contains Terraform configurations to create a Kubernetes cluster
 2. [Terraform](https://www.terraform.io/downloads.html) (v1.0.0+)
 3. [OCI CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)
 
+### Provider Configuration
+This configuration uses the official Oracle-maintained provider (`oracle/oci`) instead of the legacy HashiCorp-maintained provider (`hashicorp/oci`). The `versions.tf` file ensures the correct provider is used.
+
 ## Administrator Setup (Required First)
 
 Before creating the Kubernetes cluster, an administrator must set up the required IAM resources. This can be done either manually through the OCI Console or using Terraform. Choose one of the following approaches:
@@ -55,20 +58,39 @@ Before creating the Kubernetes cluster, an administrator must set up the require
    user_ocid        = "ocid1.user.oc1..xxxxx"   # OCID of user to add to group (optional)
    ```
 
-3. Initialize and apply the IAM configuration:
+3. First, make sure you're using the latest Terraform and provider versions:
    ```bash
-   terraform init
+   terraform init -upgrade
+   ```
+   This will ensure you're using the official Oracle provider.
+
+4. Plan and apply the IAM configuration:
+   ```bash
+   # First stage: Create IAM resources only
    terraform plan -var-file="iam.tfvars" -target=module.iam
    terraform apply -var-file="iam.tfvars" -target=module.iam
    ```
 
-4. Wait for policy propagation (approximately 5-10 minutes)
+   Note: The `-target` warning is expected and correct in this case because:
+   - IAM resources must exist before creating other resources
+   - We need to wait for policy propagation
+   - This is a legitimate use case for resource targeting
+
+5. Wait for policy propagation (approximately 5-10 minutes)
+
+6. After policies have propagated, you can remove the lock file and plan the full configuration:
+   ```bash
+   rm .terraform.lock.hcl  # Remove the old provider lock
+   terraform init -upgrade # Reinitialize with the new provider
+   terraform plan         # Plan all resources
+   ```
 
 Important Notes:
 - The administrator running these steps must have permissions to manage groups and policies
 - IAM changes can take up to 10 minutes to propagate
 - Always follow the principle of least privilege when granting permissions
 - Review all policy statements carefully before applying them
+- The two-stage apply (IAM first, then rest) is intentional for proper permission propagation
 
 ## OCI Configuration
 

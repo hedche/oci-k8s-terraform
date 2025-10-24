@@ -7,7 +7,6 @@ resource "oci_identity_group" "k8s_group" {
 
 # Add specified user to the K8s group
 resource "oci_identity_user_group_membership" "user_membership" {
-  count    = var.user_ocid != "" ? 1 : 0
   user_id  = var.user_ocid
   group_id = oci_identity_group.k8s_group.id
 }
