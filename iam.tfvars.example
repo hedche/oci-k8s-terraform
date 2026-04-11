@@ -1,3 +1,0 @@
-# IAM Configuration
-iam_group_name   = "k8s-admins"              # Name for the IAM group that will manage K8s resources
-compartment_name = "my-k8s-compartment"      # Name (not OCID) of the compartment where resources will be created

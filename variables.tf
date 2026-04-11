@@ -21,6 +21,7 @@ variable "private_key_path" {
 variable "region" {
   description = "The OCI region"
   type        = string
+  default     = "us-ashburn-1"
 }
 
 variable "compartment_ocid" {
@@ -28,41 +29,55 @@ variable "compartment_ocid" {
   type        = string
 }
 
-variable "cluster_name" {
-  description = "The name of the OKE cluster"
-  type        = string
-  default     = "oci-free-k8s-cluster"
-}
-
-variable "kubernetes_version" {
-  description = "The version of kubernetes to use. As of Oct 2025, should be at least v1.30.x"
-  type        = string
-  # We'll set this dynamically based on available versions
-  validation {
-    condition     = can(regex("^v1\\.(3[0-9]|[4-9][0-9])", var.kubernetes_version))
-    error_message = "Kubernetes version must be v1.30.0 or higher as of Oct 2025"
-  }
-}
-
-# IAM Variables
-variable "iam_group_name" {
-  description = "Name for the IAM group that will manage K8s resources"
-  type        = string
-  default     = "k8s-admins"
-}
-
-variable "compartment_name" {
-  description = "Name (not OCID) of the compartment where resources will be created"
-  type        = string
-}
-
-variable "node_pool_name" {
-  description = "The name of the node pool"
-  type        = string
-  default     = "free-tier-node-pool"
-}
-
 variable "ssh_public_key" {
-  description = "The SSH public key for node access"
+  description = "The SSH public key for accessing instances"
   type        = string
+}
+
+variable "availability_domain" {
+  description = "The availability domain number (1, 2, or 3)"
+  type        = number
+  default     = 1
+}
+
+variable "vcn_cidr" {
+  description = "CIDR block for the VCN"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_cidr" {
+  description = "CIDR block for the public subnet"
+  type        = string
+  default     = "10.0.1.0/24"
+}
+
+variable "control_plane_ocpus" {
+  description = "Number of OCPUs for control plane instance"
+  type        = number
+  default     = 1
+}
+
+variable "control_plane_memory_gb" {
+  description = "Memory in GB for control plane instance"
+  type        = number
+  default     = 6
+}
+
+variable "worker_ocpus" {
+  description = "Number of OCPUs for worker instance"
+  type        = number
+  default     = 3
+}
+
+variable "worker_memory_gb" {
+  description = "Memory in GB for worker instance"
+  type        = number
+  default     = 18
+}
+
+variable "shape_name" {
+  description = "The shape name to check for availability (used by retry script)"
+  type        = string
+  default     = "VM.Standard.A1.Flex"
 }
