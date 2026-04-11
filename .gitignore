@@ -42,3 +42,7 @@ terraform.rc
 # Local run logs
 nohup.out
 terraform-retry.log
+
+# Local kubeconfig generated after cluster bootstrap
+kubeconfig
+kubeconfig.yaml
